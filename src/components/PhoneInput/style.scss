@@ -1,0 +1,44 @@
+
+.phone-input-group {
+  display: flex;
+  .phone-input {
+    margin-left: 10px;
+  }
+}
+
+.phone-input {
+  flex: 1;
+}
+
+.material-select {
+  height: 47px;
+  .select-field {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.26) !important;
+  }
+}
+
+.select-field {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.select-field {
+  min-width: 60px;
+  max-width: 90px;
+  & > span {
+    display: flex;
+    line-height: .8;
+    align-items: flex-end;
+    padding: 20px 10px 10px 10px;
+  }
+  .flag-icon {
+    margin-right: 5px;
+  }
+  .icon {
+    margin-left: 5px;
+  }
+  svg {
+    width: 10px;
+  }
+}
