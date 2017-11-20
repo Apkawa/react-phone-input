@@ -1,5 +1,6 @@
 'use strict'
-import React, { PropTypes, Component } from 'react'
+import _ from 'lodash'
+import React from 'react'
 
 const PROPS_FUNCTION = [
   'getValue',
@@ -30,7 +31,7 @@ const EXCLUDED_PROPS = [
   'required'
 ]
 
-export default class BaseFormsyComponent extends Component {
+export default class BaseFormsyComponent extends React.Component {
 
   onChangeValue (event) {
     this.props.setValue(event.target.value)

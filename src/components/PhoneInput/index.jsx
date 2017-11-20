@@ -1,13 +1,13 @@
 'use strict'
-// import 'flag-icon-css/css/flag-icon.css'
+import _ from 'lodash'
+
+import React from 'react'
+import PropTypes from 'prop-types'
 
 import { PhoneNumberFormat as PNF, PhoneNumberUtil } from 'google-libphonenumber'
-import React, { Component, PropTypes } from 'react'
-
-import { PopupSelect } from '../PopupSelect'
 import { MaskInput } from '../MaskInput'
 
-import { getCountries } from './AllCountries'
+import { COUNTRIES_CODE2ISO_MAP, COUNTRIES_MAP, CountrySelect } from './CountrySelect'
 
 import './style.scss'
 
@@ -30,89 +30,19 @@ export function isValidNumber (value) {
 
 }
 
-const COUNTRIES = getCountries()
-const COUNTRIES_MAP = _.fromPairs(_.map(COUNTRIES, (c) => [c.iso2, c]))
-const COUNTRIES_CODE2ISO_MAP = _.fromPairs(_.map(COUNTRIES, (c) => [c.dialCode, c.iso2]))
-
-class CountrySelect extends Component {
-  static propTypes = {
-    value: PropTypes.oneOf(_.keys(COUNTRIES_MAP)),
-    defaultValue: PropTypes.oneOf(_.keys(COUNTRIES_MAP)),
-    onChange: PropTypes.func,
-    disabled: PropTypes.bool,
-    showCountryIcon: PropTypes.bool,
-  }
-
-  componentDidMount () {
-    const { onChange, defaultValue, showCountryIcon } = this.props
-    if (onChange && defaultValue && COUNTRIES_MAP[defaultValue]) {
-      onChange(defaultValue, { countryData: COUNTRIES_MAP[defaultValue] })
-    }
-    if (showCountryIcon) {
-      // TODO use lite png version
-    }
-
-  }
-
-  getOptions () {
-    return _.map(COUNTRIES, (countryData) => {
-      return {
-        value: countryData.iso2,
-        label: countryData.name,
-        countryData,
-      }
-    })
-  }
-
-  renderOptionLabel (option, props) {
-    const { countryData } = option
-    return (
-      <span>
-        <span className={`flag-icon flag-icon-${countryData.iso2}`}/>
-        {option.label}
-        <span className="dialCode">&nbsp; +{countryData.dialCode}</span>
-      </span>
-    )
-  }
-
-  renderFieldLabel (option, props) {
-    return (
-      <span>
-        <span className={`flag-icon flag-icon-${option.countryData.iso2}`}/>
-              +{option.countryData.dialCode}
-        <div className="icon">
-            <img src={require('./show-more.svg')}/>
-        </div>
-      </span>
-    )
-  }
-
-  render () {
-    const { onChange, defaultValue, value, disabled } = this.props
-    return (
-      <PopupSelect options={this.getOptions()}
-                   renderOptionLabel={this.renderOptionLabel}
-                   renderFieldLabel={this.renderFieldLabel}
-                   name="dial_code"
-                   value={value}
-                   defaultValue={defaultValue}
-                   onChange={onChange}
-                   disabled={disabled}
-      />
-    )
-  }
-}
-
-export class PhoneInput extends Component {
+export class PhoneInput extends React.Component {
   static propTypes = {
     defaultValue: PropTypes.string,
     onChange: PropTypes.func,
+    onValidChange: PropTypes.func,
+    onInvalid: PropTypes.func,
     value: PropTypes.string,
     defaultCountry: PropTypes.string,
     country: PropTypes.string,
     invalid: PropTypes.bool,
-    readonly: PropTypes.bool,
+    readOnly: PropTypes.bool,
     disabled: PropTypes.bool,
+    showMask: PropTypes.bool
   }
   initialValue = this.props.value || this.props.defaultValue
   hasCustomPlaceholder = !!this.props.placeholder
@@ -126,29 +56,42 @@ export class PhoneInput extends Component {
     country: COUNTRIES_MAP[this.parseCountry(this.initialValue) || this.props.defaultCountry],
     placeholder: this.props.placeholder,
     mask: null,
-    invalidState: this.props.invalid,
+    invalidState: this.props.invalid
   }
 
   componentDidUpdate (prevProps, prevState) {
-    const { onChange } = this.props
-    const { value, isValid } = this.state
-    if (onChange && prevState.value != value) {
-      onChange(isValid ? this.getFullNumber(value) : null)
+    const {onChange, onValidChange} = this.props
+    const {value, isValid} = this.state
+    if (prevState.value !== value) {
+      const cleanedValue = isValid ? this.getFullNumber(value) : null
+      const state = {
+        cleanedValue,
+        value,
+        number: this.getNumber(value),
+        isValid
+
+      }
+      if (_.isFunction(onChange)) {
+        onChange(state.number, state)
+      }
+      if (_.isFunction(onValidChange)) {
+        onValidChange(cleanedValue, state)
+      }
     }
   }
 
   componentWillReceiveProps (nextProps) {
-    const { value, country } = nextProps
+    const {value, country} = nextProps
     let nextState
     if (value) {
       nextState = {
         value: this.formatValue(value),
-        country: COUNTRIES_MAP[this.parseCountry(value)],
+        country: COUNTRIES_MAP[this.parseCountry(value)]
       }
     } else if (country) {
       nextState = {
         value: value,
-        country: COUNTRIES_MAP[country],
+        country: COUNTRIES_MAP[country]
       }
     }
     if (nextState) {
@@ -156,7 +99,7 @@ export class PhoneInput extends Component {
         return {
           ...nextState,
           isValid: this.isValidNumber(value, nextState.country),
-          isEmpty: this.isEmpty(value),
+          isEmpty: this.isEmpty(value)
         }
       })
     }
@@ -175,15 +118,15 @@ export class PhoneInput extends Component {
     return mask
   }
 
-  onCountrySelect = (value, { countryData }) => {
+  onCountrySelect = (value, {countryData}) => {
     const placeholder = phoneUtil.format(
       phoneUtil.getExampleNumber(countryData.iso2, false, PNF.MOBILE), PNF.MOBILE)
     const mask = this.placeholderToMask(placeholder)
-    this.setState({ country: countryData, placeholder, mask })
+    this.setState({country: countryData, placeholder, mask})
   }
 
   parseNumber (value, country) {
-    const country_iso2 = _.get(country, 'iso2')
+    const country_iso2 = _.get(country, 'iso2', this.props.defaultCountry)
 
     if (!value) {
       return value
@@ -191,7 +134,6 @@ export class PhoneInput extends Component {
     try {
       // Try region value, as example 999 444-55-55
       if (country_iso2) {
-        // const regionCode = phoneUtil.getRegionCodeForCountryCode(country_iso2);
         return phoneUtil.parseAndKeepRawInput(value, country_iso2)
       }
       // May be +7 ...
@@ -201,7 +143,12 @@ export class PhoneInput extends Component {
       if (!_.startsWith(value, '+')) {
         value = '+' + value
       }
-      return phoneUtil.parseAndKeepRawInput(value)
+      try {
+        return phoneUtil.parseAndKeepRawInput(value)
+      } catch (ex) {
+        return false
+      }
+
     }
     return false
   }
@@ -210,7 +157,9 @@ export class PhoneInput extends Component {
     if (!value) {
       return ''
     }
-    value = phoneUtil.format(this.parseNumber(value), PNF.MOBILE)
+    if (isValidNumber(value)) {
+      value = phoneUtil.format(this.parseNumber(value), PNF.MOBILE)
+    }
     return value || ''
 
   }
@@ -248,38 +197,68 @@ export class PhoneInput extends Component {
 
   onChangeInput = (e) => {
     const value = e.target.value
-    this.setState(({ country }) => {
+    this.setState(({country}) => {
       return {
         value,
         isValid: this.isValidNumber(value, country),
-        isEmpty: this.isEmpty(value),
+        isEmpty: this.isEmpty(value)
       }
     })
   }
 
   onInputBlur = (e) => {
-    const { required, invalid } = this.props
-    this.setState(({ isEmpty, value, country }) => {
+    const {required, invalid, onInvalid} = this.props
+    this.setState(({isEmpty, value, country}) => {
       const isValid = this.isValidNumber(value, country)
+      const invalidState = invalid || (!isEmpty && !isValid) || (required && isEmpty)
+      if (!isValid && _.isFunction(onInvalid)) {
+        onInvalid({valid_number: false})
+      }
       return {
         isValid: isValid,
-        invalidState: invalid || (!isEmpty && !isValid) || (required && isEmpty),
+        invalidState
       }
     })
   }
 
-  render () {
-    const { defaultCountry, invalid, readonly, disabled, label } = this.props
+  renderMask () {
+    const {defaultCountry, invalid, readOnly, disabled, label, showMask} = this.props
     // TODO Custom placeholder
-    const { mask, placeholder, value, country, invalidState } = this.state
-    const country_iso2 = _.get(country, 'iso2')
+    const {mask, placeholder, value, country, invalidState} = this.state
+
     const maskInputProps = {
       value,
       placeholder,
       mask,
-      readonly,
+      readOnly,
       disabled,
+      maskChar: null
     }
+
+    if (showMask) {
+      maskInputProps.maskChar = '_'
+    }
+
+    return (
+      <MaskInput
+        {...maskInputProps}
+        ref="input"
+        type="tel"
+        onChange={this.onChangeInput}
+        label={label || 'Номер телефона'}
+        floatingLabel={true}
+        invalid={invalidState}
+        onBlur={this.onInputBlur}
+      />
+
+    )
+  }
+
+  render () {
+    const {defaultCountry, readOnly, disabled} = this.props
+    // TODO Custom placeholder
+    const {country} = this.state
+    const country_iso2 = _.get(country, 'iso2')
     return (
       <div className="phone-input-group">
         <div className="phone-country">
@@ -288,25 +267,17 @@ export class PhoneInput extends Component {
             value={country_iso2}
             onChange={this.onCountrySelect}
             ref="select"
-            disabled={disabled || readonly}
+            disabled={disabled || readOnly}
           />
         </div>
         <div className="phone-input">
-          <MaskInput
-            {...maskInputProps}
-            ref="input"
-            type="tel"
-            maskChar={null}
-            onChange={this.onChangeInput}
-            label={label || 'Номер телефона'}
-            floatingLabel={true}
-            invalid={invalidState}
-            onBlur={this.onInputBlur}
-          />
+          {this.renderMask()}
         </div>
       </div>
     )
 
   }
 }
+
+export default PhoneInput
 

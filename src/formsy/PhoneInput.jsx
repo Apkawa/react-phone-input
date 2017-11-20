@@ -1,28 +1,34 @@
 'use strict'
-import Formsy, { HOC } from 'formsy-react'
-import React, { Component, PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
+import { HOC, addValidationRule } from 'formsy-react'
+import { isEmptyString, isExisty } from 'formsy-react/src/validationRules'
 
 import { isValidNumber, PhoneInput as MuiPhoneInput } from '../components/PhoneInput'
 
 import BaseFormsyComponent from './BaseFormsyComponent'
 
-Formsy.addValidationRule('phone', (values, value) => {
-  return isValidNumber(value)
+addValidationRule('phone', (values, value) => {
+  console.log(values, value)
+  return !isExisty(values, value) || isEmptyString(values, value) || isValidNumber(value)
 })
 
-// FIXME допилить обработку ошибок formsy
 export class PhoneInput extends BaseFormsyComponent {
   static propTypes = {
-    defaultFromSim: PropTypes.func
+    defaultFromSim: PropTypes.func,
+    renderError: PropTypes.func
   }
 
-  static defaultProps = {
-    validations: 'phone'
-  }
+  validationPhoneMessage = 'Неправильный номер телефона'
 
-  validationError = 'Неправильный номер телефона'
+  static defaultProps = {}
+
+  static contextTypes = {
+    formsy: PropTypes.object // What about required?
+  }
 
   state = {
+    value_state: null,
     simPhone: undefined,
     simCountry: undefined
   }
@@ -37,16 +43,32 @@ export class PhoneInput extends BaseFormsyComponent {
     }
   }
 
-  onChangeValue = (value) => {
+  _getErrorMessage () {
+    return this.props.validationErrors.phone || this.validationPhoneMessage
+  }
+
+  onChangeValue = (value, state) => {
     this.setValue(value)
+    this.setState(() => ({value_state: state}))
+    if (!state.isValid && state.value) {
+      this.context.formsy.updateInputsWithError({
+        [this.props.name]: this._getErrorMessage()
+      })
+    }
   }
 
   renderErrorMessage () {
-    const errorMessage = this.props.getErrorMessage()
+    let errorMessage = this.props.getErrorMessage()
+    const {value_state} = this.state
+    if (!errorMessage && value_state && value_state.value && !value_state.isValid) {
+      errorMessage = this._getErrorMessage()
+    }
     if (!errorMessage) {
       return null
     }
-    // FIXME добавить стандартный стиль для ошибки
+    if (_.isFunction(this.props.renderError)) {
+      return this.props.renderError(errorMessage, this.props)
+    }
     return (
       <span className="error">{errorMessage}</span>
     )
@@ -62,7 +84,8 @@ export class PhoneInput extends BaseFormsyComponent {
       <div>
         <MuiPhoneInput {...cleanedProps}
                        value={this.getValue()}
-                       onChange={this.onChangeValue}/>
+                       onValidChange={this.onChangeValue}
+        />
         {this.renderErrorMessage()}
       </div>
     )

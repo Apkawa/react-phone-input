@@ -1,12 +1,11 @@
 'use strict'
-import React, { PropTypes, Component } from 'react'
-import Immutable, { Map } from 'immutable'
-import ImmutablePropTypes from 'react-immutable-proptypes'
-
-import { MuiInput } from './mui/mui'
+import React, { Component} from 'react'
+import PropTypes from 'prop-types';
 
 // https://github.com/sanniassin/react-input-mask
 import InputMask from 'react-input-mask'
+
+import { MuiInput } from './mui'
 
 export class MaskInput extends Component {
   renderInput (mask_props, props) {

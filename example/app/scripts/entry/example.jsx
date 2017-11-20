@@ -1,13 +1,12 @@
 import React from 'react'
-import render from 'u24-common/lib/react/utils/render'
+import ReactDOM from 'react-dom'
 import { Helmet } from 'react-helmet'
-
-import { setLang } from 'u24-calculator/common'
+import domready from 'domready'
 
 import {
   HashRouter as Router,
   Route,
-  Link,
+  Link
 } from 'react-router-dom'
 
 import pages from '../pages'
@@ -22,7 +21,7 @@ const PageRender = ({match: {params: {page}}}) => {
 class StyleToggle extends React.Component {
   state = {
     type: 'desktop',
-    lang: 'ru',
+    lang: 'ru'
   }
 
   render_desktop () {
@@ -41,7 +40,8 @@ class StyleToggle extends React.Component {
       </Helmet>
     )
   }
-  render_nothing() {
+
+  render_nothing () {
     return null
   }
 
@@ -54,14 +54,6 @@ class StyleToggle extends React.Component {
           this.setState({type: e.target.value})
         }}>
           {['desktop', 'mobile', 'nothing'].map((v) => (
-            <option value={v}>{v}</option>
-          ))}
-        </select>
-        <select onChange={(e) => {
-          window.LANG = e.target.value
-          this.setState({lang: e.target.value})
-        }}>
-          {['ru', 'en'].map((v) => (
             <option value={v}>{v}</option>
           ))}
         </select>
@@ -87,6 +79,9 @@ const App = () => (
   </Router>
 )
 
-$(() => {
-  render(document.getElementById('root'), App, {})
+domready(() => {
+  ReactDOM.render(
+    <App/>,
+    document.getElementById('root')
+  )
 })

@@ -2,7 +2,7 @@
 const _ = require('lodash')
 const path = require('path')
 
-const req = require.context('.', true, /^(.*\.(jsx$))[^.]*$/igm)
+const req = require.context('.', true, /^(.*\.(jsx$))[^.]*$/im)
 req.keys().forEach((key) => {
   req(key)
 })
