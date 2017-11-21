@@ -16,12 +16,15 @@ addValidationRule('phone', (values, value) => {
 export class PhoneInput extends BaseFormsyComponent {
   static propTypes = {
     defaultFromSim: PropTypes.func,
-    renderError: PropTypes.func
+    renderError: PropTypes.func,
+    validationPhoneMessage: PropTypes.string,
   }
 
-  validationPhoneMessage = 'Неправильный номер телефона'
+  validationPhoneMessage = this.props.validationPhoneMessage
 
-  static defaultProps = {}
+  static defaultProps = {
+    validationPhoneMessage: 'Неверный номер телефона'
+  }
 
   static contextTypes = {
     formsy: PropTypes.object // What about required?
@@ -50,11 +53,6 @@ export class PhoneInput extends BaseFormsyComponent {
   onChangeValue = (value, state) => {
     this.setValue(value)
     this.setState(() => ({value_state: state}))
-    if (!state.isValid && state.value) {
-      this.context.formsy.updateInputsWithError({
-        [this.props.name]: this._getErrorMessage()
-      })
-    }
   }
 
   renderErrorMessage () {
@@ -85,6 +83,7 @@ export class PhoneInput extends BaseFormsyComponent {
         <MuiPhoneInput {...cleanedProps}
                        value={this.getValue()}
                        onValidChange={this.onChangeValue}
+                       invalid={!this.isPristine() && !this.isValid()}
         />
         {this.renderErrorMessage()}
       </div>

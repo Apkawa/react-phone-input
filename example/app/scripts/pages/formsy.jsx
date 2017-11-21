@@ -20,13 +20,19 @@ export default class Page extends React.Component {
           <PhoneInput defaultCountry={'ru'}
                       name="phone"
                       key="phone"
-                      validations="phone"
+                      required
+                      validations="isExisty,phone"
+                      validationsErrors={{
+                        isExisty: 'Поле не может быть пустым',
+                        phone: 'Введите корректный номер телефона'
+                      }}
           />
           <PhoneInput defaultCountry={'ru'}
                       name="phone_2"
                       value="+79999999999"
                       key="phone_2"
                       required
+                      validationPhoneMessage="Введите корректный номер телефона"
 
           />
           <button disabled={!this.state.valid} type="submit">Submit</button>
