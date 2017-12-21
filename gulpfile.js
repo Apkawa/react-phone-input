@@ -42,8 +42,8 @@ const config = {
     config: {
       resolve: {
         alias: {
-          'react-phone-input$': path.resolve(__dirname, 'lib'),
-          'react-phone-input': path.resolve(__dirname) + '/',
+          '@apkawa/react-phone-input$': path.resolve(__dirname, 'lib'),
+          '@apkawa/react-phone-input': path.resolve(__dirname) + '/',
         },
       },
     },

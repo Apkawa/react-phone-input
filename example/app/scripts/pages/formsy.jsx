@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
-import PhoneInput from 'react-phone-input/lib/formsy'
+import PhoneInput from '@apkawa/react-phone-input/lib/formsy'
+import '@apkawa/muicss/dist/css/mui.css'
 import { Form } from 'formsy-react'
 
 export default class Page extends React.Component {
@@ -17,7 +18,8 @@ export default class Page extends React.Component {
               onInvalid={() => this.setState({valid: false})}
               onValid={() => this.setState({valid: true})}
         >
-          <PhoneInput defaultCountry={'ru'}
+          <PhoneInput
+            defaultCountry={'ru'}
                       name="phone"
                       key="phone"
                       required

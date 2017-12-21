@@ -48,10 +48,10 @@ export class PopupSelect extends Component {
       this.onChange(this.state.value)
     }
     if (prevState.show_popup !== this.state.show_popup) {
-      if (this.state.show_popup || this.props.onPopupOpened) {
+      if (this.state.show_popup &&  this.props.onPopupOpened) {
         this.props.onPopupOpened()
       } else {
-        this.props.onPopupClosed()
+        this.props.onPopupClosed && this.props.onPopupClosed()
       }
     }
   }
@@ -110,19 +110,20 @@ export class PopupSelect extends Component {
     }
     return (
       <div key={i} className="mui-radio">
-        <label onClick={(e) => {
-          this.setState({value: e.target.value})
-          this.onCloseSelect()
-        }}>
+        <label>
           <input
             type="radio"
             name={props.name}
             value={option.value}
             defaultChecked={option.value === this.state.value}
-            onChange={(e) => this.setState({
-              checked_value: e.target.value,
-              checked_option: this.options_map.get(e.target.value)
-            })}
+            onChange={(e) => {
+              this.setState({
+                value: e.target.value,
+                checked_value: e.target.value,
+                checked_option: this.options_map.get(e.target.value)
+              })
+              this.onCloseSelect()
+            }}
 
           />
 
